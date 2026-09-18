@@ -14,7 +14,7 @@ repositories {
 }
 
 def runeLiteVersion = 'latest.release'
-def pluginMainClass = 'com.example.ExamplePluginTest'
+def pluginMainClass = 'com.gimventorysetups.GIMventorySetupsPluginTest'
 
 dependencies {
 	compileOnly group: 'net.runelite', name:'client', version: runeLiteVersion
@@ -25,9 +25,16 @@ dependencies {
 	testImplementation 'junit:junit:4.12'
 	testImplementation group: 'net.runelite', name:'client', version: runeLiteVersion
 	testImplementation group: 'net.runelite', name:'jshell', version: runeLiteVersion
+
+	// Local-only, for running GIMventorySetupsDevHarness against a sibling checkout of
+	// inventory-setups while it isn't on the Plugin Hub. Not touched by Hub CI (build=standard
+	// compiles src/main against its own build.gradle, ignoring this one's test sourceSet), but
+	// remove before actually submitting this repo if it's ever committed.
+	testCompileOnly files('../inventory-setups/build/classes/java/main')
+	testRuntimeOnly files('../inventory-setups/build/classes/java/main', '../inventory-setups/build/resources/main')
 }
 
-group = 'com.example'
+group = 'com.gimventorysetups'
 
 tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'
@@ -40,6 +47,24 @@ tasks.register('run', JavaExec) {
 
 	jvmArgs "-ea"
 	args "--developer-mode", "--debug"
+}
+
+// Local dev-only - see GIMventorySetupsDevHarness's own doc comment.
+tasks.register('runWithInventorySetups', JavaExec) {
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'com.gimventorysetups.GIMventorySetupsDevHarness'
+
+	jvmArgs "-ea"
+	args "--developer-mode", "--debug", "--profile=\"Iron\""
+}
+
+// Local no-dev
+tasks.register('runWithInventorySetupsNoDev', JavaExec) {
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'com.gimventorysetups.GIMventorySetupsDevHarness'
+
+	jvmArgs "-ea"
+	args "--profile=\"Iron\""
 }
 
 tasks.register('shadowJar', Jar) {
