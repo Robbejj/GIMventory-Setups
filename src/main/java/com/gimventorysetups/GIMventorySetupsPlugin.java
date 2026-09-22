@@ -5,6 +5,7 @@ import javax.inject.Inject;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.ScriptID;
 import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.api.events.PostClientTick;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.VarClientIntChanged;
 import net.runelite.api.events.WidgetClosed;
@@ -126,6 +127,19 @@ public class GIMventorySetupsPlugin extends Plugin
 		if (event.getScriptId() == ScriptID.GROUP_IRONMAN_STORAGE_BUILD)
 		{
 			captureAndApply();
+		}
+	}
+
+	// Native clientscripts (e.g. the click-feedback flash on withdraw) can overwrite our target widgets
+	// outside of GROUP_IRONMAN_STORAGE_BUILD, so re-assert our filtered view every tick to cover it.
+	// Must be PostClientTick, not ClientTick, since ClientTick fires before clientscript execution and
+	// would just get overwritten again. Cheap: reuses the already-captured native snapshot, no re-reads.
+	@Subscribe
+	public void onPostClientTick(PostClientTick event)
+	{
+		if (sharedBankLayout.isFilterApplied())
+		{
+			applyActiveSetup();
 		}
 	}
 
