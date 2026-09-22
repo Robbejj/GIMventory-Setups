@@ -80,6 +80,7 @@ class SharedBankLayout
 	private int[] nativeItemIds;
 	private int[] nativeQuantities;
 	private GridGeometry nativeGeometry;
+	private String nativeTitle;
 
 	private boolean filterApplied;
 
@@ -109,6 +110,7 @@ class SharedBankLayout
 		nativeItemIds = null;
 		nativeQuantities = null;
 		nativeGeometry = null;
+		nativeTitle = null;
 		filterApplied = false;
 	}
 
@@ -123,6 +125,7 @@ class SharedBankLayout
 			return false;
 		}
 
+		nativeTitle = getTitleText();
 		nativeGeometry = deriveGeometry(slots);
 		nativeItemIds = new int[slots.size()];
 		nativeQuantities = new int[slots.size()];
@@ -178,6 +181,7 @@ class SharedBankLayout
 		}
 
 		filterApplied = true;
+		setTitleText("<col=ff0000>" + contents.name + "</col>");
 
 		// Index cached native items by canonical ID. Deliberately not one-shot: if the setup wants
 		// the same item in several slots but storage only holds it as a single stack, every one of
@@ -228,6 +232,27 @@ class SharedBankLayout
 				slot.setOnDragListener((Object[]) null);
 			}
 		}
+	}
+
+	private void setTitleText(String text)
+	{
+		Widget bankTitle = getTitleWidget();
+		if (bankTitle != null)
+		{
+			bankTitle.setText(text);
+		}
+	}
+
+	private String getTitleText()
+	{
+		Widget bankTitle = getTitleWidget();
+		return bankTitle == null ? null : bankTitle.getText();
+	}
+
+	private Widget getTitleWidget()
+	{
+		Widget frame = client.getWidget(InterfaceID.SharedBank.FRAME);
+		return frame == null ? null : frame.getChild(1);
 	}
 
 	// Builds the "desired" map (logical position -> item ID) using the same reference positions as
@@ -303,6 +328,10 @@ class SharedBankLayout
 		}
 
 		filterApplied = false;
+		if (nativeTitle != null)
+		{
+			setTitleText(nativeTitle);
+		}
 
 		int count = Math.min(nativeItemIds.length, slots.size());
 		for (int i = 0; i < count; i++)

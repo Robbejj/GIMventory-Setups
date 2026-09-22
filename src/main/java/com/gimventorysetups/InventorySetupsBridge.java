@@ -51,6 +51,7 @@ class InventorySetupsBridge
 		}
 
 		return new ActiveSetupContents(
+			(String) activeSetup,
 			asIntegerList(data.get(DATA_EQUIPMENT_ITEM_IDS)),
 			asIntegerList(data.get(DATA_INVENTORY_ITEM_IDS)),
 			asIntegerList(data.get(DATA_ADDITIONAL_ITEM_IDS)));
@@ -67,12 +68,14 @@ class InventorySetupsBridge
 
 	static final class ActiveSetupContents
 	{
+		final String name;
 		final List<Integer> equipmentIds;
 		final List<Integer> inventoryIds;
 		final List<Integer> additionalIds;
 
-		private ActiveSetupContents(List<Integer> equipmentIds, List<Integer> inventoryIds, List<Integer> additionalIds)
+		private ActiveSetupContents(String name, List<Integer> equipmentIds, List<Integer> inventoryIds, List<Integer> additionalIds)
 		{
+			this.name = name;
 			this.equipmentIds = equipmentIds;
 			this.inventoryIds = inventoryIds;
 			this.additionalIds = additionalIds;

@@ -16,6 +16,14 @@ repositories {
 def runeLiteVersion = 'latest.release'
 def pluginMainClass = 'com.gimventorysetups.GIMventorySetupsPluginTest'
 
+// GIMventorySetupsDevHarness is local dev-only tooling that runs this plugin against a sibling
+// checkout of inventory-setups while it isn't on the Plugin Hub. Only wire it up when that sibling
+// has actually been built, so a fresh clone (contributors, CI, reviewers) can still run
+// `./gradlew build`/`test` without it.
+def inventorySetupsMainClasses = file('../inventory-setups/build/classes/java/main')
+def inventorySetupsResources = file('../inventory-setups/build/resources/main')
+def hasSiblingInventorySetups = inventorySetupsMainClasses.exists()
+
 dependencies {
 	compileOnly group: 'net.runelite', name:'client', version: runeLiteVersion
 
@@ -26,12 +34,22 @@ dependencies {
 	testImplementation group: 'net.runelite', name:'client', version: runeLiteVersion
 	testImplementation group: 'net.runelite', name:'jshell', version: runeLiteVersion
 
-	// Local-only, for running GIMventorySetupsDevHarness against a sibling checkout of
-	// inventory-setups while it isn't on the Plugin Hub. Not touched by Hub CI (build=standard
-	// compiles src/main against its own build.gradle, ignoring this one's test sourceSet), but
-	// remove before actually submitting this repo if it's ever committed.
-	testCompileOnly files('../inventory-setups/build/classes/java/main')
-	testRuntimeOnly files('../inventory-setups/build/classes/java/main', '../inventory-setups/build/resources/main')
+	if (hasSiblingInventorySetups) {
+		testCompileOnly files(inventorySetupsMainClasses)
+		testRuntimeOnly files(inventorySetupsMainClasses, inventorySetupsResources)
+	}
+}
+
+// Only compiles against the sibling inventory-setups classes added above - exclude it when that
+// checkout isn't present so the test source set still builds cleanly on its own.
+sourceSets {
+	test {
+		if (!hasSiblingInventorySetups) {
+			java {
+				exclude 'com/gimventorysetups/GIMventorySetupsDevHarness.java'
+			}
+		}
+	}
 }
 
 group = 'com.gimventorysetups'
@@ -47,24 +65,6 @@ tasks.register('run', JavaExec) {
 
 	jvmArgs "-ea"
 	args "--developer-mode", "--debug"
-}
-
-// Local dev-only - see GIMventorySetupsDevHarness's own doc comment.
-tasks.register('runWithInventorySetups', JavaExec) {
-	classpath = sourceSets.test.runtimeClasspath
-	mainClass = 'com.gimventorysetups.GIMventorySetupsDevHarness'
-
-	jvmArgs "-ea"
-	args "--developer-mode", "--debug", "--profile=\"Iron\""
-}
-
-// Local no-dev
-tasks.register('runWithInventorySetupsNoDev', JavaExec) {
-	classpath = sourceSets.test.runtimeClasspath
-	mainClass = 'com.gimventorysetups.GIMventorySetupsDevHarness'
-
-	jvmArgs "-ea"
-	args "--profile=\"Iron\""
 }
 
 tasks.register('shadowJar', Jar) {

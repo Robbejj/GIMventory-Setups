@@ -118,7 +118,9 @@ public class GIMventorySetupsPlugin extends Plugin
 		}
 	}
 
-	@Subscribe
+	// Priority below core Bank's default (0) for this same event - Bank's own GROUP_IRONMAN_STORAGE_BUILD
+	// handler appends the GE/HA value onto the title, and we want our setup-name overwrite to win.
+	@Subscribe(priority = -1)
 	public void onScriptPostFired(ScriptPostFired event)
 	{
 		if (event.getScriptId() == ScriptID.GROUP_IRONMAN_STORAGE_BUILD)
